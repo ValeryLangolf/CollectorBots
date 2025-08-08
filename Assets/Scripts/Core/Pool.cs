@@ -1,40 +1,30 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Pool
+public class Pool<T> where T : MonoBehaviour
 {
-    private readonly Diamond _prefab;
-    private readonly Stack<Diamond> _diamonds = new Stack<Diamond>();
-    private readonly Transform _parent;
-    private readonly int _maxCount;
+    private readonly T _prefab;
+    private readonly Transform _transform;
+    private readonly Stack<T> _elements = new();
 
-    public Pool(Diamond prefab, Transform parent, int maxCount)
+    public Pool(T prefab, Transform transform)
     {
         _prefab = prefab;
-        _parent = parent;
-        _maxCount = maxCount;
+        _transform = transform;
     }
 
-    public Diamond Get()
+    public T Get()
     {
-        if (_diamonds.Count >= _maxCount)
-            return null;
+        T element = _elements.Count > 0 ? _elements.Pop() : Object.Instantiate(_prefab, _transform);
+        element.gameObject.SetActive(true);
 
-        Diamond diamond = _diamonds.Count > 0 ? _diamonds.Pop() : Create();
-        diamond.gameObject.SetActive(true);
-        diamond.Deactivated += Return;
-
-        return diamond;
+        return element;
     }
 
-    private void Return(Diamond diamond)
+    public void Return(T element)
     {
-        diamond.transform.SetParent(_parent);
-        diamond.Deactivated -= Return;
-        diamond.gameObject.SetActive(false);
-        _diamonds.Push(diamond);
+        element.gameObject.SetActive(false);
+        element.transform.SetParent(_transform);
+        _elements.Push(element);
     }
-
-    private Diamond Create() =>
-        Object.Instantiate(_prefab, _parent);
 }
